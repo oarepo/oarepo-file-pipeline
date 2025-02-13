@@ -121,7 +121,7 @@ def app_config(app_config):
         }
     ]
     app_config["CACHE_TYPE"] = "redis"
-    app_config["CACHE_REDIS_URL"]='redis://localhost:6379/0'
+    app_config["CACHE_REDIS_URL"]='redis://localhost:6579/0'
 
     app_config["SQLALCHEMY_DATABASE_URI"] = "postgresql://test:test@127.0.0.1:5432/test"
 
