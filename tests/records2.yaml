@@ -1,0 +1,25 @@
+record:
+  use:
+    - invenio
+  module:
+    qualified: records2
+  permissions:
+    presets: [ 'everyone' ]
+  files:
+    properties:
+      file_title: keyword
+    use:
+      - invenio_files
+    module:
+      qualified: records2
+    resource:
+      base-classes: [ oarepo_file_pipeline.resources.PipelineFileResource, invenio_records_resources.resources.files.resource.FileResource ]
+    service:
+      base-classes: [ oarepo_file_pipeline.services.PipelineFileService, invenio_records_resources.services.files.service.FileService ]
+
+  properties:
+    metadata:
+     properties:
+      title:
+       type: keyword
+
