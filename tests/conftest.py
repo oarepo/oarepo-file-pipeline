@@ -120,8 +120,10 @@ def app_config(app_config):
             "port": os.environ.get("OPENSEARCH_PORT", "9200"),
         }
     ]
-    app_config["CACHE_TYPE"] = "redis"
-    app_config["CACHE_REDIS_URL"]='redis://localhost:6579/0'
+
+    app_config["CACHE_TYPE"] = "SimpleCache"
+    #app_config["CACHE_TYPE"] = "redis"
+    #app_config["CACHE_REDIS_URL"]='redis://localhost:6579/0'
 
     app_config["SQLALCHEMY_DATABASE_URI"] = "postgresql://test:test@127.0.0.1:5432/test"
 
