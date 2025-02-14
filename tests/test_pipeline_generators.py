@@ -18,7 +18,7 @@ def test_zip_generator_can_handle(app, client, users, record_with_files, locatio
 
     assert zip_generator.can_handle(users.identity, record_with_files[1].files['blah.zip']) == True
     assert zip_generator.can_handle(users.identity, record_with_files[1].files['blah.txt']) == False
-    assert zip_generator.can_handle(users.identity, record_with_files[1].files['blah.jpeg']) == False
+    assert zip_generator.can_handle(users.identity, record_with_files[1].files['blah.jpg']) == False
 
 def test_zip_generator_get_pipeline_success(app, client, users, record_with_files, location, search_clear):
     zip_generator = ZipGenerator()
@@ -86,7 +86,7 @@ def test_image_generator_can_handle(app, client, users, record_with_files, locat
 
     assert image_generator.can_handle(users.identity, record_with_files[1].files['blah.zip']) == False
     assert image_generator.can_handle(users.identity, record_with_files[1].files['blah.txt']) == False
-    assert image_generator.can_handle(users.identity, record_with_files[1].files['blah.jpeg']) == True
+    assert image_generator.can_handle(users.identity, record_with_files[1].files['blah.jpg']) == True
     assert image_generator.can_handle(users.identity, record_with_files[1].files['blah.png']) == True
 
 def test_image_generator_get_pipeline_success(app, client, users, record_with_files, location, search_clear):
@@ -113,7 +113,7 @@ def test_image_generator_get_pipeline_no_file_url(app, client, users, record_wit
     image_generator = ImageGenerator()
     with pytest.raises(ValueError):
         image_generator.get_pipeline(users.identity,
-                                          record_with_files[1].files['blah.jpeg'],
+                                          record_with_files[1].files['blah.jpg'],
                                           "",
                                           "preview_picture",
                                           {})
@@ -135,7 +135,7 @@ def test_crypt4gh_generator_can_handle(app, client, users, record_with_files, lo
 
     assert cryp4gh_generator.can_handle(users.identity, record_with_files[1].files['blah.zip']) == False
     assert cryp4gh_generator.can_handle(users.identity, record_with_files[1].files['blah.txt']) == False
-    assert cryp4gh_generator.can_handle(users.identity, record_with_files[1].files['blah.jpeg']) == False
+    assert cryp4gh_generator.can_handle(users.identity, record_with_files[1].files['blah.jpg']) == False
     assert cryp4gh_generator.can_handle(users.identity, record_with_files[1].files['blah.c4gh']) == True
 
 

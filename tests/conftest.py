@@ -197,7 +197,7 @@ def record_with_files(app, users):
     file_service.init_files(users.identity, rec['id'],[
         {'key':'blah.txt'},
         {'key':'blah.zip'},
-        {'key':'blah.jpeg'},
+        {'key':'blah.jpg'},
         {'key': 'blah.png'},
         {'key': 'blah.c4gh'},
     ])
@@ -212,7 +212,7 @@ def record_with_files(app, users):
 
     result = file_service.commit_file(users.identity, rec['id'], "blah.txt")
     result = file_service.commit_file(users.identity, rec['id'], "blah.zip")
-    result = file_service.commit_file(users.identity, rec['id'], "blah.jpeg")
+    result = file_service.commit_file(users.identity, rec['id'], "blah.jpg")
     result = file_service.commit_file(users.identity, rec['id'], "blah.png")
     result = file_service.commit_file(users.identity, rec['id'], "blah.c4gh")
 
