@@ -182,6 +182,15 @@ def users(UserFixture, app, db):
 
 @pytest.fixture()
 def record_with_files(app, users):
+    with open('tests/blah.c4gh', 'rb') as f:
+        c4gh = f.read()
+    with open('tests/blah.zip', 'rb') as f:
+        z = f.read()
+    with open('tests/blah.jpg', 'rb') as f:
+        jpg = f.read()
+    with open('tests/blah.png', 'rb') as f:
+        png = f.read()
+
     rec = current_service.create(users.identity, {"metadata": {"title":"blah"}})
 
     file_service = app.extensions["records2"].service_files
@@ -195,10 +204,10 @@ def record_with_files(app, users):
 
     from io import BytesIO
     file_service.set_file_content(users.identity, rec['id'],"blah.txt", BytesIO(b'blahblahblah'))
-    file_service.set_file_content(users.identity, rec['id'],"blah.zip", BytesIO(b'blahblahblah'))
-    file_service.set_file_content(users.identity, rec['id'], "blah.jpeg", BytesIO(b'blahblahblah'))
-    file_service.set_file_content(users.identity, rec['id'], "blah.png", BytesIO(b'blahblahblah'))
-    file_service.set_file_content(users.identity, rec['id'], "blah.c4gh", BytesIO(b'blahblahblah'))
+    file_service.set_file_content(users.identity, rec['id'],"blah.zip", BytesIO(z))
+    file_service.set_file_content(users.identity, rec['id'], "blah.jpg", BytesIO(jpg))
+    file_service.set_file_content(users.identity, rec['id'], "blah.png", BytesIO(png))
+    file_service.set_file_content(users.identity, rec['id'], "blah.c4gh", BytesIO(c4gh))
 
 
     result = file_service.commit_file(users.identity, rec['id'], "blah.txt")
