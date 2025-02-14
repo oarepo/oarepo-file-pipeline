@@ -18,6 +18,11 @@ jobs:
       with:
         python-version: '3.12'
 
+    - name: Start Redis
+      uses: supercharge/redis-github-action@1.7.0
+      with:
+        redis-version: ${{ matrix.redis-version }}
+
     - name: Run tests
       run: |
         chmod +x run-tests.sh
