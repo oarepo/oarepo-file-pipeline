@@ -8,11 +8,21 @@
 """Package initialization"""
 
 from typing import Protocol
+
 from flask_principal import Identity
 from invenio_records_resources.records.api import FileRecord
+
+__version__ = "0.1.0"
 
 
 class PipelineGetterFunction(Protocol):
     """Protocol defining the expected signature for a pipeline getter function."""
-    def __call__(self, identity: Identity, file_record: FileRecord, file_url: str, suggested_pipeline: str | None, extra_arguments: dict[str,str]):
-        ...
+
+    def __call__(
+        self,
+        identity: Identity,
+        file_record: FileRecord,
+        file_url: str,
+        suggested_pipeline: str | None,
+        extra_arguments: dict[str, str],
+    ): ...
