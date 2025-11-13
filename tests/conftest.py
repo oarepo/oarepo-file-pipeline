@@ -1,20 +1,28 @@
-import pytest
-import os
-from invenio_app.factory import create_api as _create_api
-"""
-ROOT_DIR = os.path.abspath(os.path.dirname(__file__) + "/..")
-RECORDS2_DIR = os.path.join(ROOT_DIR, "records2")
-
-import sys
-sys.path.insert(0, ROOT_DIR)
-sys.path.insert(0, RECORDS2_DIR)
-"""
-from records2.records.api import Records2Record
-from records2.proxies import current_service
-from joserfc.rfc7518.rsa_key import RSAKey
 import logging
 
-logging.basicConfig(format='%(levelname)s:%(message)s', level=logging.INFO)
+import pytest
+from invenio_access.permissions import (
+    system_identity,
+)
+from invenio_rdm_records.proxies import current_rdm_records_service
+from invenio_rdm_records.records.api import RDMDraft, RDMRecord
+from invenio_records_resources.config import RECORDS_RESOURCES_TRANSFERS
+from invenio_vocabularies.proxies import current_service as vocabulary_service
+from invenio_vocabularies.records.api import Vocabulary
+from joserfc.jwk import RSAKey
+
+from oarepo_file_pipeline import config
+from oarepo_file_pipeline.services.permissions import PipelineFilePermissionPolicy
+
+pytest_plugins = [
+    "pytest_oarepo.records",
+    "pytest_oarepo.fixtures",
+    "pytest_oarepo.users",
+    "pytest_oarepo.files",
+]
+
+
+logging.basicConfig(format="%(levelname)s:%(message)s", level=logging.INFO)
 
 
 repo_private_key = """
@@ -72,7 +80,7 @@ ywIDAQAB
 -----END PUBLIC KEY-----
 """
 
-server_private_key="""
+server_private_key = """
 -----BEGIN PRIVATE KEY-----
 MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCzy+bo4XI6k/I/
 qfFDA0GlfX0gp/lIw2rgUQAMr/NahsuR8Q6VUyFDvv/suwDzbY878rcse2gDjbPP
@@ -103,7 +111,8 @@ oXMkXQNjJhyifeoAmStK3G4=
 -----END PRIVATE KEY-----
 """
 
-@pytest.fixture(scope='module')
+
+@pytest.fixture(scope="module")
 def app_config(app_config):
     app_config["JSONSCHEMAS_HOST"] = "localhost"
     app_config["RECORDS_REFRESOLVER_CLS"] = (
@@ -113,109 +122,218 @@ def app_config(app_config):
         "invenio_jsonschemas.proxies.current_refresolver_store"
     )
 
-    app_config['SEARCH_INDEXES'] = {}
-    app_config["SEARCH_HOSTS"] = [
-        {
-            "host": os.environ.get("OPENSEARCH_HOST", "127.0.0.1"),
-            "port": os.environ.get("OPENSEARCH_PORT", "9200"),
-        }
-    ]
-
     app_config["CACHE_TYPE"] = "redis"
-    #app_config["CACHE_REDIS_URL"]='redis://localhost:6579/0'
 
-    app_config["SQLALCHEMY_DATABASE_URI"] = "postgresql://test:test@127.0.0.1:5432/test"
-
-    app_config["PIPELINE_REPOSITORY_JWK"] =  {
+    app_config["PIPELINE_REPOSITORY_JWK"] = {
         "private_key": RSAKey.import_key(repo_private_key),
         "public_key": RSAKey.import_key(repo_public_key),
     }
 
     """Public RSA key of FILE_PIPELINE_SERVER to encrypt JWE token with payload"""
-    app_config["PIPELINE_JWK"] =  {
-         "public_key": RSAKey.import_key(server_public_key),
+    app_config["PIPELINE_JWK"] = {
+        "public_key": RSAKey.import_key(server_public_key),
     }
 
     """FILE_PIPELINE_SERVER redirect url"""
     app_config["PIPELINE_REDIRECT_URL"] = "http://localhost:5555/pipeline"
 
     app_config["PIPELINE_SIGNING_ALGORITHM"] = "RS256"
-    app_config["PIPELINE_ENCRYPTION_ALGORITHM"] ="RSA-OAEP"
+    app_config["PIPELINE_ENCRYPTION_ALGORITHM"] = "RSA-OAEP"
     app_config["PIPELINE_ENCRYPTION_METHOD"] = "A256GCM"
 
     # Only done for testing, should not be here in the first place
     app_config["PIPELINE_SERVER_PRIVATE"] = RSAKey.import_key(server_private_key)
+
+    app_config["RECORDS_RESOURCES_TRANSFERS"] = [
+        *RECORDS_RESOURCES_TRANSFERS,
+        *config.RECORDS_RESOURCES_TRANSFERS,
+    ]
+
+    app_config["RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE"] = (
+        config.RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE
+    )
+
+    app_config["RDM_PERMISSION_POLICY"] = PipelineFilePermissionPolicy
+
     return app_config
+
 
 @pytest.fixture(scope="module")
 def extra_entry_points():
     return {
-        'invenio_base.apps': [
+        "invenio_base.apps": [
             "oarepo_file_pipeline = oarepo_file_pipeline.ext:OARepoFilePipeline"
         ],
-        'invenio_base.api_apps': [
+        "invenio_base.api_apps": [
             "oarepo_file_pipeline = oarepo_file_pipeline.ext:OARepoFilePipeline"
         ],
-        'oarepo.file.pipelines': [
+        "oarepo.file.pipelines": [
             "zip_pipelines = oarepo_file_pipeline.pipeline_generators.zip:ZipGenerator",
             "image_pipelines = oarepo_file_pipeline.pipeline_generators.image:ImageGenerator"
-            "c4gh_pipeline = oarepo_file_pipeline.pipeline_generators.crypt4gh:Crypt4GHGenerator"
-        ]
+            "c4gh_pipeline = oarepo_file_pipeline.pipeline_generators.crypt4gh:Crypt4GHGenerator",
+        ],
+        "invenio_base.blueprints": [
+            "oarepo_file_pipeline = oarepo_file_pipeline.views:create_pipeline_file_blueprint"
+        ],
     }
 
 
-@pytest.fixture(scope="module")
-def create_app():
-    """Application factory fixture."""
-    return _create_api
-
-
 @pytest.fixture()
-def users(UserFixture, app, db):
-    u = UserFixture(
-        email="test@test.com",
-        password="test",
-    )
-    u.create(app, db)
-    return u
+def draft_record_with_files(app, db, users):
+    user = users[0]
 
-@pytest.fixture()
-def record_with_files(app, users):
-    with open('tests/blah.c4gh', 'rb') as f:
+    with open("tests/blah.c4gh", "rb") as f:
         c4gh = f.read()
-    with open('tests/blah.zip', 'rb') as f:
+    with open("tests/blah.zip", "rb") as f:
         z = f.read()
-    with open('tests/blah.jpg', 'rb') as f:
+    with open("tests/blah.jpg", "rb") as f:
         jpg = f.read()
-    with open('tests/blah.png', 'rb') as f:
+    with open("tests/blah.png", "rb") as f:
         png = f.read()
 
-    rec = current_service.create(users.identity, {"metadata": {"title":"blah"}})
+    rec = current_rdm_records_service.create(
+        user.identity, {"metadata": {"title": "blah"}}
+    )
 
-    file_service = app.extensions["records2"].service_files
-    file_service.init_files(users.identity, rec['id'],[
-        {'key':'blah.txt'},
-        {'key':'blah.zip'},
-        {'key':'blah.jpg'},
-        {'key': 'blah.png'},
-        {'key': 'blah.c4gh'},
-    ])
+    file_service = current_rdm_records_service._draft_files
+
+    file_service.init_files(
+        user.identity,
+        rec["id"],
+        [
+            {"key": "blah.txt"},
+            {"key": "blah.zip"},
+            {"key": "blah.jpg"},
+            {"key": "blah.png"},
+            {"key": "blah.c4gh"},
+        ],
+    )
 
     from io import BytesIO
-    file_service.set_file_content(users.identity, rec['id'],"blah.txt", BytesIO(b'blahblahblah'))
-    file_service.set_file_content(users.identity, rec['id'],"blah.zip", BytesIO(z))
-    file_service.set_file_content(users.identity, rec['id'], "blah.jpg", BytesIO(jpg))
-    file_service.set_file_content(users.identity, rec['id'], "blah.png", BytesIO(png))
-    file_service.set_file_content(users.identity, rec['id'], "blah.c4gh", BytesIO(c4gh))
+
+    file_service.set_file_content(
+        user.identity, rec["id"], "blah.txt", BytesIO(b"blahblahblah")
+    )
+    file_service.set_file_content(user.identity, rec["id"], "blah.zip", BytesIO(z))
+    file_service.set_file_content(user.identity, rec["id"], "blah.jpg", BytesIO(jpg))
+    file_service.set_file_content(user.identity, rec["id"], "blah.png", BytesIO(png))
+    file_service.set_file_content(user.identity, rec["id"], "blah.c4gh", BytesIO(c4gh))
+
+    result = file_service.commit_file(user.identity, rec["id"], "blah.txt")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.zip")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.jpg")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.png")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.c4gh")
+
+    RDMDraft.index.refresh()
+    return result._record
 
 
-    result = file_service.commit_file(users.identity, rec['id'], "blah.txt")
-    result = file_service.commit_file(users.identity, rec['id'], "blah.zip")
-    result = file_service.commit_file(users.identity, rec['id'], "blah.jpg")
-    result = file_service.commit_file(users.identity, rec['id'], "blah.png")
-    result = file_service.commit_file(users.identity, rec['id'], "blah.c4gh")
-
-    Records2Record.index.refresh()
-    return rec, rec._record
+@pytest.fixture
+def resource_type_type(app, db):
+    """Resource type vocabulary type."""
+    return vocabulary_service.create_type(system_identity, "resourcetypes", "rsrct")
 
 
+@pytest.fixture
+def resource_type_v(app, db, resource_type_type):
+    """Resource type vocabulary record."""
+    vocab = vocabulary_service.create(
+        system_identity,
+        {
+            "id": "image-photo",
+            "props": {
+                "csl": "graphic",
+                "datacite_general": "Image",
+                "datacite_type": "Photo",
+                "openaire_resourceType": "25",
+                "openaire_type": "dataset",
+                "eurepo": "info:eu-repo/semantics/other",
+                "schema.org": "https://schema.org/Photograph",
+                "subtype": "image-photo",
+                "type": "image",
+                "marc21_type": "image",
+                "marc21_subtype": "photo",
+            },
+            "icon": "chart bar outline",
+            "title": {"en": "Photo"},
+            "tags": ["depositable", "linkable"],
+            "type": "resourcetypes",
+        },
+    )
+
+    Vocabulary.index.refresh()
+
+    return vocab
+
+
+@pytest.fixture()
+def published_record_with_files(app, db, resource_type_v, users):
+    user = users[0]
+
+    with open("tests/blah.c4gh", "rb") as f:
+        c4gh = f.read()
+    with open("tests/blah.zip", "rb") as f:
+        z = f.read()
+    with open("tests/blah.jpg", "rb") as f:
+        jpg = f.read()
+    with open("tests/blah.png", "rb") as f:
+        png = f.read()
+
+    rec = current_rdm_records_service.create(
+        user.identity,
+        {
+            "metadata": {
+                "title": "blah",
+                "publication_date": "2020-06-01",
+                "resource_type": {"id": "image-photo"},
+                "creators": [
+                    {
+                        "person_or_org": {
+                            "family_name": "Brown",
+                            "given_name": "Troy",
+                            "type": "personal",
+                        }
+                    }
+                ],
+            }
+        },
+    )
+
+    file_service = current_rdm_records_service._draft_files
+
+    file_service.init_files(
+        user.identity,
+        rec["id"],
+        [
+            {"key": "blah.txt"},
+            {"key": "blah.zip"},
+            {"key": "blah.jpg"},
+            {"key": "blah.png"},
+            {"key": "blah.c4gh"},
+        ],
+    )
+
+    from io import BytesIO
+
+    file_service.set_file_content(
+        user.identity, rec["id"], "blah.txt", BytesIO(b"blahblahblah")
+    )
+    file_service.set_file_content(user.identity, rec["id"], "blah.zip", BytesIO(z))
+    file_service.set_file_content(user.identity, rec["id"], "blah.jpg", BytesIO(jpg))
+    file_service.set_file_content(user.identity, rec["id"], "blah.png", BytesIO(png))
+    file_service.set_file_content(user.identity, rec["id"], "blah.c4gh", BytesIO(c4gh))
+
+    result = file_service.commit_file(user.identity, rec["id"], "blah.txt")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.zip")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.jpg")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.png")
+    result = file_service.commit_file(user.identity, rec["id"], "blah.c4gh")
+
+    current_rdm_records_service.publish(
+        user.identity,
+        rec["id"],
+    )
+
+    RDMRecord.index.refresh()
+    return result._record

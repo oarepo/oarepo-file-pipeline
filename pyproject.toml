@@ -14,9 +14,9 @@ dependencies = [
 
 [project.optional-dependencies]
 tests = [
-    "pytest~=7.1.3",
+    "deepmerge",
     "pytest-invenio",
-    "pytest-flask",
+    "pytest-oarepo"
 ]
 
 [project.entry-points."invenio_base.apps"]
