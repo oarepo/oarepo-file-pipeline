@@ -5,12 +5,15 @@
 # modify it under the terms of the MIT License; see LICENSE file for more
 # details.
 #
-"""Package initialization"""
+"""Package initialization."""
 
-from typing import Protocol
+from __future__ import annotations
 
-from flask_principal import Identity
-from invenio_records_resources.records.api import FileRecord
+from typing import TYPE_CHECKING, Protocol
+
+if TYPE_CHECKING:
+    from flask_principal import Identity
+    from invenio_records_resources.records.api import FileRecord
 
 __version__ = "0.1.0"
 
@@ -25,4 +28,5 @@ class PipelineGetterFunction(Protocol):
         file_url: str,
         suggested_pipeline: str | None,
         extra_arguments: dict[str, str],
-    ): ...
+    ):
+        """Generate pipeline for specific file and extra arguments."""

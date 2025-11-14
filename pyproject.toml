@@ -9,6 +9,8 @@ authors = [
 requires-python = ">=3.13,<3.14"
 dependencies = [
     "oarepo[rdm,tests]>=14.0.0,<15.0.0",
+    "oarepo-runtime>=2.0.0dev5,<3.0.0",
+    "oarepo-model>=0.1.0dev17,<1.0.0",
     "joserfc",
 ]
 
@@ -30,8 +32,6 @@ zip_pipelines = "oarepo_file_pipeline.pipeline_generators.zip:ZipGenerator"
 image_pipelines = "oarepo_file_pipeline.pipeline_generators.image:ImageGenerator"
 c4gh_pipeline = "oarepo_file_pipeline.pipeline_generators.crypt4gh:Crypt4GHGenerator"
 
-[project.entry-points."invenio_base.blueprints"]
-oarepo_file_pipeline = "oarepo_file_pipeline.views:create_pipeline_file_blueprint"
 
 [project.urls]
 Homepage = "https://github.com/oarepo/oarepo-file-pipeline"

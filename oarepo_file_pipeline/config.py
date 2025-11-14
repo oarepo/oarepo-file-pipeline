@@ -7,6 +7,8 @@
 #
 """Default configuration."""
 
+from __future__ import annotations
+
 repo_private_key = """"""
 
 repo_public_key = """"""
@@ -36,7 +38,7 @@ PIPELINE_ENCRYPTION_METHOD = "A256GCM"
 
 
 RECORDS_RESOURCES_TRANSFERS = [
-    "oarepo_file_pipeline.services.pipeline_transfer:PipelineTransfer",
+    "oarepo_file_pipeline.model.presets.pipeline.services.pipeline_transfer:PipelineTransfer",
 ]
 
 RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE = "P"

@@ -7,6 +7,9 @@
 #
 """Resource package initialization."""
 
-from .resource import PipelineFileResource
+from __future__ import annotations
 
-__all__ = ["PipelineFileResource"]
+from .config import PipelineResourceConfigPreset
+from .resource import PipelineResourcePreset
+
+__all__ = ["PipelineResourceConfigPreset", "PipelineResourcePreset"]

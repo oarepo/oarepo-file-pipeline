@@ -9,15 +9,21 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, override
 
 from flask import g, redirect, request
 from flask_resources import resource_requestctx, route
 from invenio_records_resources.resources import FileResource
 from invenio_records_resources.resources.files.resource import request_view_args
+from oarepo_model.customizations import AddMixins, Customization
+from oarepo_model.presets import Preset
 
 if TYPE_CHECKING:
-    from flask import Response
+    from collections.abc import Generator
+
+    from oarepo_model.builder import InvenioModelBuilder
+    from oarepo_model.model import InvenioModel
+    from werkzeug.wrappers import Response as WerkzeugResponse
 
 
 class PipelineFileResource(FileResource):
@@ -27,17 +33,16 @@ class PipelineFileResource(FileResource):
     """
 
     def create_url_rules(self) -> list:
-        """Add /pipeline route"""
+        """Add /pipeline route."""
         routes = self.config.routes
 
-        rules = [
+        return [
             route("GET", routes["read_with_pipeline"], self.read_with_pipeline),
         ]
-        return rules
 
     @request_view_args
-    def read_with_pipeline(self) -> Response:
-        """Process pipeline request with service layer
+    def read_with_pipeline(self) -> WerkzeugResponse:
+        """Process pipeline request with service layer.
 
         Service layer returns a redirect link for current pipeline steps
         """
@@ -49,5 +54,19 @@ class PipelineFileResource(FileResource):
             suggested_pipeline=query_params.pop("pipeline", None),
             query_params=query_params,
         )
-        print(redirect_url)
         return redirect(redirect_url, code=302)
+
+
+class PipelineResourcePreset(Preset):
+    """Preset for file resource class."""
+
+    modifies = ("FileResource",)
+
+    @override
+    def apply(
+        self,
+        builder: InvenioModelBuilder,
+        model: InvenioModel,
+        dependencies: dict[str, Any],
+    ) -> Generator[Customization]:
+        yield AddMixins("FileResource", PipelineFileResource)

@@ -1,3 +1,13 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-file-pipeline (see https://github.com/oarepo/oarepo-file-pipeline).
+#
+# oarepo-file-pipeline is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+from __future__ import annotations
+
 import pytest
 
 from oarepo_file_pipeline.pipeline_generators.crypt4gh import Crypt4GHGenerator
@@ -5,31 +15,16 @@ from oarepo_file_pipeline.pipeline_generators.image import ImageGenerator
 from oarepo_file_pipeline.pipeline_generators.zip import ZipGenerator
 
 
-class MockResponse:
-    def __init__(self):
-        self.headers = {"Location": "google.com"}
-
-
-def test_zip_generator_can_handle(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_zip_generator_can_handle(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     zip_generator = ZipGenerator()
 
-    assert zip_generator.can_handle(
-        user.identity, draft_record_with_files.files["blah.zip"]
-    )
-    assert not zip_generator.can_handle(
-        user.identity, draft_record_with_files.files["blah.txt"]
-    )
-    assert not zip_generator.can_handle(
-        user.identity, draft_record_with_files.files["blah.jpg"]
-    )
+    assert zip_generator.can_handle(user.identity, draft_record_with_files.files["blah.zip"])
+    assert not zip_generator.can_handle(user.identity, draft_record_with_files.files["blah.txt"])
+    assert not zip_generator.can_handle(user.identity, draft_record_with_files.files["blah.jpg"])
 
 
-def test_zip_generator_get_pipeline_success(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_zip_generator_get_pipeline_success(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     zip_generator = ZipGenerator()
 
@@ -69,12 +64,10 @@ def test_zip_generator_get_pipeline_success(
     ]
 
 
-def test_zip_generator_get_pipeline_no_file_url(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_zip_generator_get_pipeline_no_file_url(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     zip_generator = ZipGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         zip_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.zip"],
@@ -84,12 +77,10 @@ def test_zip_generator_get_pipeline_no_file_url(
         )
 
 
-def test_zip_generator_get_pipeline_can_not_handle(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_zip_generator_get_pipeline_can_not_handle(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     zip_generator = ZipGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         zip_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.txt"],
@@ -99,12 +90,10 @@ def test_zip_generator_get_pipeline_can_not_handle(
         )
 
 
-def test_zip_generator_get_pipeline_no_arguments(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_zip_generator_get_pipeline_no_arguments(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     zip_generator = ZipGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         zip_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.zip"],
@@ -114,33 +103,17 @@ def test_zip_generator_get_pipeline_no_arguments(
         )
 
 
-def test_image_generator_can_handle(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_image_generator_can_handle(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     image_generator = ImageGenerator()
 
-    assert not (
-        image_generator.can_handle(
-            user.identity, draft_record_with_files.files["blah.zip"]
-        )
-    )
-    assert not (
-        image_generator.can_handle(
-            user.identity, draft_record_with_files.files["blah.txt"]
-        )
-    )
-    assert image_generator.can_handle(
-        user.identity, draft_record_with_files.files["blah.jpg"]
-    )
-    assert image_generator.can_handle(
-        user.identity, draft_record_with_files.files["blah.png"]
-    )
+    assert not (image_generator.can_handle(user.identity, draft_record_with_files.files["blah.zip"]))
+    assert not (image_generator.can_handle(user.identity, draft_record_with_files.files["blah.txt"]))
+    assert image_generator.can_handle(user.identity, draft_record_with_files.files["blah.jpg"])
+    assert image_generator.can_handle(user.identity, draft_record_with_files.files["blah.png"])
 
 
-def test_image_generator_get_pipeline_success(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_image_generator_get_pipeline_success(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     image_generator = ImageGenerator()
 
@@ -164,12 +137,10 @@ def test_image_generator_get_pipeline_success(
     ]
 
 
-def test_image_generator_get_pipeline_no_file_url(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_image_generator_get_pipeline_no_file_url(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     image_generator = ImageGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         image_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.jpg"],
@@ -184,7 +155,7 @@ def test_image_generator_get_pipeline_can_not_handle(
 ):
     user = users[0]
     image_generator = ImageGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         image_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.txt"],
@@ -194,35 +165,17 @@ def test_image_generator_get_pipeline_can_not_handle(
         )
 
 
-def test_crypt4gh_generator_can_handle(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_crypt4gh_generator_can_handle(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     cryp4gh_generator = Crypt4GHGenerator()
 
-    assert not (
-        cryp4gh_generator.can_handle(
-            user.identity, draft_record_with_files.files["blah.zip"]
-        )
-    )
-    assert not (
-        cryp4gh_generator.can_handle(
-            user.identity, draft_record_with_files.files["blah.txt"]
-        )
-    )
-    assert not (
-        cryp4gh_generator.can_handle(
-            user.identity, draft_record_with_files.files["blah.jpg"]
-        )
-    )
-    assert cryp4gh_generator.can_handle(
-        user.identity, draft_record_with_files.files["blah.c4gh"]
-    )
+    assert not (cryp4gh_generator.can_handle(user.identity, draft_record_with_files.files["blah.zip"]))
+    assert not (cryp4gh_generator.can_handle(user.identity, draft_record_with_files.files["blah.txt"]))
+    assert not (cryp4gh_generator.can_handle(user.identity, draft_record_with_files.files["blah.jpg"]))
+    assert cryp4gh_generator.can_handle(user.identity, draft_record_with_files.files["blah.c4gh"])
 
 
-def test_crypt4gh_generator_get_pipeline_success(
-    app, client, users, draft_record_with_files, location, search_clear
-):
+def test_crypt4gh_generator_get_pipeline_success(app, client, users, draft_record_with_files, location, search_clear):
     user = users[0]
     crypt4gh_generator = Crypt4GHGenerator()
 
@@ -250,7 +203,7 @@ def test_crypt4gh_generator_get_pipeline_no_file_url(
 ):
     user = users[0]
     crypt4gh_generator = Crypt4GHGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         crypt4gh_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.c4gh"],
@@ -265,7 +218,7 @@ def test_crypt4gh_generator_get_pipeline_can_not_handle(
 ):
     user = users[0]
     crypt4gh_generator = Crypt4GHGenerator()
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011
         crypt4gh_generator.get_pipeline(
             user.identity,
             draft_record_with_files.files["blah.txt"],

@@ -1,18 +1,21 @@
+#
+# Copyright (c) 2025 CESNET z.s.p.o.
+#
+# This file is a part of oarepo-file-pipeline (see https://github.com/oarepo/oarepo-file-pipeline).
+#
+# oarepo-file-pipeline is free software; you can redistribute it and/or modify it
+# under the terms of the MIT License; see LICENSE file for more details.
+#
+from __future__ import annotations
+
 import logging
+from pathlib import Path
 
 import pytest
-from invenio_access.permissions import (
-    system_identity,
-)
-from invenio_rdm_records.proxies import current_rdm_records_service
-from invenio_rdm_records.records.api import RDMDraft, RDMRecord
 from invenio_records_resources.config import RECORDS_RESOURCES_TRANSFERS
-from invenio_vocabularies.proxies import current_service as vocabulary_service
-from invenio_vocabularies.records.api import Vocabulary
 from joserfc.jwk import RSAKey
 
 from oarepo_file_pipeline import config
-from oarepo_file_pipeline.services.permissions import PipelineFilePermissionPolicy
 
 pytest_plugins = [
     "pytest_oarepo.records",
@@ -112,15 +115,31 @@ oXMkXQNjJhyifeoAmStK3G4=
 """
 
 
+@pytest.fixture(scope="session")
+def model_types():
+    """Model types fixture."""
+    # Define the model types used in the tests
+    return {
+        "Metadata": {
+            "properties": {
+                "title": {"type": "keyword", "required": True},
+            }
+        }
+    }
+
+
+@pytest.fixture(scope="session")
+def model_a(model_types):
+    from .models import modela
+
+    return modela
+
+
 @pytest.fixture(scope="module")
 def app_config(app_config):
     app_config["JSONSCHEMAS_HOST"] = "localhost"
-    app_config["RECORDS_REFRESOLVER_CLS"] = (
-        "invenio_records.resolver.InvenioRefResolver"
-    )
-    app_config["RECORDS_REFRESOLVER_STORE"] = (
-        "invenio_jsonschemas.proxies.current_refresolver_store"
-    )
+    app_config["RECORDS_REFRESOLVER_CLS"] = "invenio_records.resolver.InvenioRefResolver"
+    app_config["RECORDS_REFRESOLVER_STORE"] = "invenio_jsonschemas.proxies.current_refresolver_store"
 
     app_config["CACHE_TYPE"] = "redis"
 
@@ -149,53 +168,48 @@ def app_config(app_config):
         *config.RECORDS_RESOURCES_TRANSFERS,
     ]
 
-    app_config["RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE"] = (
-        config.RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE
-    )
+    app_config["RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE"] = config.RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE
 
-    app_config["RDM_PERMISSION_POLICY"] = PipelineFilePermissionPolicy
+    app_config["FILES_REST_STORAGE_FACTORY"] = "invenio_s3.s3fs_storage_factory"
+    app_config["S3_ENDPOINT_URL"] = "http://localhost:9000"
+    app_config["S3_ACCESS_KEY_ID"] = "invenio"
+    app_config["S3_SECRET_ACCESS_KEY"] = "invenio8"  # noqa: S105
+    app_config["S3_BUCKET"] = "default"
 
     return app_config
 
 
 @pytest.fixture(scope="module")
-def extra_entry_points():
+def extra_entry_points(model_a):
     return {
-        "invenio_base.apps": [
-            "oarepo_file_pipeline = oarepo_file_pipeline.ext:OARepoFilePipeline"
-        ],
-        "invenio_base.api_apps": [
-            "oarepo_file_pipeline = oarepo_file_pipeline.ext:OARepoFilePipeline"
-        ],
+        "invenio_base.apps": ["oarepo_file_pipeline = oarepo_file_pipeline.ext:OARepoFilePipeline"],
+        "invenio_base.api_apps": ["oarepo_file_pipeline = oarepo_file_pipeline.ext:OARepoFilePipeline"],
         "oarepo.file.pipelines": [
             "zip_pipelines = oarepo_file_pipeline.pipeline_generators.zip:ZipGenerator",
             "image_pipelines = oarepo_file_pipeline.pipeline_generators.image:ImageGenerator"
             "c4gh_pipeline = oarepo_file_pipeline.pipeline_generators.crypt4gh:Crypt4GHGenerator",
         ],
-        "invenio_base.blueprints": [
-            "oarepo_file_pipeline = oarepo_file_pipeline.views:create_pipeline_file_blueprint"
-        ],
     }
 
 
-@pytest.fixture()
-def draft_record_with_files(app, db, users):
+@pytest.fixture
+def draft_record_with_files(app, db, users, model_a):
     user = users[0]
 
-    with open("tests/blah.c4gh", "rb") as f:
+    with Path("tests/blah.c4gh").open("rb") as f:
         c4gh = f.read()
-    with open("tests/blah.zip", "rb") as f:
+    with Path("tests/blah.zip").open("rb") as f:
         z = f.read()
-    with open("tests/blah.jpg", "rb") as f:
+    with Path("tests/blah.jpg").open("rb") as f:
         jpg = f.read()
-    with open("tests/blah.png", "rb") as f:
+    with Path("tests/blah.png").open("rb") as f:
         png = f.read()
 
-    rec = current_rdm_records_service.create(
-        user.identity, {"metadata": {"title": "blah"}}
-    )
+    records_service = model_a.proxies.current_service
 
-    file_service = current_rdm_records_service._draft_files
+    rec = records_service.create(user.identity, {"metadata": {"title": "blah"}, "files": {"enabled": True}})
+
+    file_service = records_service._draft_files  # noqa: SLF001
 
     file_service.init_files(
         user.identity,
@@ -211,9 +225,7 @@ def draft_record_with_files(app, db, users):
 
     from io import BytesIO
 
-    file_service.set_file_content(
-        user.identity, rec["id"], "blah.txt", BytesIO(b"blahblahblah")
-    )
+    file_service.set_file_content(user.identity, rec["id"], "blah.txt", BytesIO(b"blahblahblah"))
     file_service.set_file_content(user.identity, rec["id"], "blah.zip", BytesIO(z))
     file_service.set_file_content(user.identity, rec["id"], "blah.jpg", BytesIO(jpg))
     file_service.set_file_content(user.identity, rec["id"], "blah.png", BytesIO(png))
@@ -225,82 +237,28 @@ def draft_record_with_files(app, db, users):
     result = file_service.commit_file(user.identity, rec["id"], "blah.png")
     result = file_service.commit_file(user.identity, rec["id"], "blah.c4gh")
 
-    RDMDraft.index.refresh()
-    return result._record
+    model_a.Draft.index.refresh()
+    return result._record  # noqa: SLF001
 
 
 @pytest.fixture
-def resource_type_type(app, db):
-    """Resource type vocabulary type."""
-    return vocabulary_service.create_type(system_identity, "resourcetypes", "rsrct")
-
-
-@pytest.fixture
-def resource_type_v(app, db, resource_type_type):
-    """Resource type vocabulary record."""
-    vocab = vocabulary_service.create(
-        system_identity,
-        {
-            "id": "image-photo",
-            "props": {
-                "csl": "graphic",
-                "datacite_general": "Image",
-                "datacite_type": "Photo",
-                "openaire_resourceType": "25",
-                "openaire_type": "dataset",
-                "eurepo": "info:eu-repo/semantics/other",
-                "schema.org": "https://schema.org/Photograph",
-                "subtype": "image-photo",
-                "type": "image",
-                "marc21_type": "image",
-                "marc21_subtype": "photo",
-            },
-            "icon": "chart bar outline",
-            "title": {"en": "Photo"},
-            "tags": ["depositable", "linkable"],
-            "type": "resourcetypes",
-        },
-    )
-
-    Vocabulary.index.refresh()
-
-    return vocab
-
-
-@pytest.fixture()
-def published_record_with_files(app, db, resource_type_v, users):
+def published_record_with_files(app, db, users, model_a):
     user = users[0]
 
-    with open("tests/blah.c4gh", "rb") as f:
+    with Path("tests/blah.c4gh").open("rb") as f:
         c4gh = f.read()
-    with open("tests/blah.zip", "rb") as f:
+    with Path("tests/blah.zip").open("rb") as f:
         z = f.read()
-    with open("tests/blah.jpg", "rb") as f:
+    with Path("tests/blah.jpg").open("rb") as f:
         jpg = f.read()
-    with open("tests/blah.png", "rb") as f:
+    with Path("tests/blah.png").open("rb") as f:
         png = f.read()
 
-    rec = current_rdm_records_service.create(
-        user.identity,
-        {
-            "metadata": {
-                "title": "blah",
-                "publication_date": "2020-06-01",
-                "resource_type": {"id": "image-photo"},
-                "creators": [
-                    {
-                        "person_or_org": {
-                            "family_name": "Brown",
-                            "given_name": "Troy",
-                            "type": "personal",
-                        }
-                    }
-                ],
-            }
-        },
-    )
+    records_service = model_a.proxies.current_service
 
-    file_service = current_rdm_records_service._draft_files
+    rec = records_service.create(user.identity, {"metadata": {"title": "blah"}, "files": {"enabled": True}})
+
+    file_service = records_service._draft_files  # noqa: SLF001
 
     file_service.init_files(
         user.identity,
@@ -316,9 +274,7 @@ def published_record_with_files(app, db, resource_type_v, users):
 
     from io import BytesIO
 
-    file_service.set_file_content(
-        user.identity, rec["id"], "blah.txt", BytesIO(b"blahblahblah")
-    )
+    file_service.set_file_content(user.identity, rec["id"], "blah.txt", BytesIO(b"blahblahblah"))
     file_service.set_file_content(user.identity, rec["id"], "blah.zip", BytesIO(z))
     file_service.set_file_content(user.identity, rec["id"], "blah.jpg", BytesIO(jpg))
     file_service.set_file_content(user.identity, rec["id"], "blah.png", BytesIO(png))
@@ -330,10 +286,23 @@ def published_record_with_files(app, db, resource_type_v, users):
     result = file_service.commit_file(user.identity, rec["id"], "blah.png")
     result = file_service.commit_file(user.identity, rec["id"], "blah.c4gh")
 
-    current_rdm_records_service.publish(
+    records_service.publish(
         user.identity,
         rec["id"],
     )
 
-    RDMRecord.index.refresh()
-    return result._record
+    model_a.Record.index.refresh()
+    return result._record  # noqa: SLF001
+
+
+@pytest.fixture(scope="module")
+def location(database):
+    """Create a simple default s3 location for a test."""
+    from invenio_files_rest.models import Location
+
+    location_obj = Location(name="pytest-location", uri="s3://default", default=True)
+
+    database.session.add(location_obj)
+    database.session.commit()
+
+    return location_obj
