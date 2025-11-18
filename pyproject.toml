@@ -20,6 +20,9 @@ tests = [
     "pytest-invenio",
     "pytest-oarepo"
 ]
+oarepo14=[
+    "oarepo[rdm]>=14,<15",
+]
 
 [project.entry-points."invenio_base.apps"]
 oarepo_file_pipeline = "oarepo_file_pipeline.ext:OARepoFilePipeline"
