@@ -12,8 +12,10 @@ import logging
 from pathlib import Path
 
 import pytest
+from invenio_accounts.profiles.schemas import UserProfileSchema
 from invenio_records_resources.config import RECORDS_RESOURCES_TRANSFERS
 from joserfc.jwk import RSAKey
+from marshmallow import fields
 
 from oarepo_file_pipeline import config
 
@@ -135,6 +137,12 @@ def model_a(model_types):
     return modela
 
 
+class CustomUserProfileSchema(UserProfileSchema):
+    """Custom user profile schema with additional fields."""
+
+    public_key = fields.String(required=False)
+
+
 @pytest.fixture(scope="module")
 def app_config(app_config):
     app_config["JSONSCHEMAS_HOST"] = "localhost"
@@ -175,6 +183,8 @@ def app_config(app_config):
     app_config["S3_ACCESS_KEY_ID"] = "invenio"
     app_config["S3_SECRET_ACCESS_KEY"] = "invenio8"  # noqa: S105
     app_config["S3_BUCKET"] = "default"
+
+    app_config["ACCOUNTS_USER_PROFILE_SCHEMA"] = CustomUserProfileSchema
 
     return app_config
 
@@ -306,3 +316,20 @@ def location(database):
     database.session.commit()
 
     return location_obj
+
+
+@pytest.fixture
+def user_with_public_key_in_profile(app, UserFixture, db):  # noqa: N803
+    user1 = UserFixture(
+        email="user1@example.org",
+        password="user1password",  # noqa: S106
+        active=True,
+        confirmed=True,
+        user_profile={
+            "affiliations": "CERN",
+            "public_key": "super_duper_non_secret_public_key_value",
+        },
+        preferences={"locale": "en", "visibility": "public"},
+    )
+    user1.create(app, db)
+    return user1
