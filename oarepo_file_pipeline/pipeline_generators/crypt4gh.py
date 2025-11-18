@@ -53,7 +53,7 @@ class Crypt4GHGenerator(PipelineGenerator):
             raise ValueError("File URL cannot be None")
 
         if pipeline_name == "crypt4gh":
-            user_pub_key = identity.user.user_profile["public_key"] or extra_arguments.get("recipient_pub")
+            user_pub_key = identity.user.user_profile.get("public_key") or extra_arguments.get("recipient_pub")  # type: ignore[attr-defined]
 
             return [
                 {
