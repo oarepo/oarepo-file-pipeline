@@ -48,11 +48,6 @@ class OARepoFilePipeline:
             [*RECORDS_RESOURCES_TRANSFERS, *config.RECORDS_RESOURCES_TRANSFERS],
         )
 
-        app.config.setdefault(
-            "RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE",
-            config.RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE,
-        )
-
         app.config.setdefault("PIPELINE_REDIRECT_URL", config.PIPELINE_REDIRECT_URL)
         app.config.setdefault("PIPELINE_REPOSITORY_JWK", config.PIPELINE_REPOSITORY_JWK)
         app.config.setdefault("PIPELINE_JWK", config.PIPELINE_JWK)

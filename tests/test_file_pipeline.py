@@ -147,6 +147,7 @@ def test_pipeline(app, client, users, published_record_with_files, location, sea
 def test_pipeline_crypt4gh_key_taken_from_user_profile(
     app, logged_client, user_with_public_key_in_profile, published_record_with_files, location, search_clear
 ):
+    # since in tests permissions are not enforced we can use any user
     client = logged_client(user_with_public_key_in_profile)
 
     response = client.get(f"/modela/{published_record_with_files['id']}/files/blah.c4gh/pipeline?pipeline=crypt4gh")

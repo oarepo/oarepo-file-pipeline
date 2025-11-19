@@ -176,8 +176,6 @@ def app_config(app_config):
         *config.RECORDS_RESOURCES_TRANSFERS,
     ]
 
-    app_config["RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE"] = config.RECORDS_RESOURCES_DEFAULT_TRANSFER_TYPE
-
     app_config["FILES_REST_STORAGE_FACTORY"] = "invenio_s3.s3fs_storage_factory"
     app_config["S3_ENDPOINT_URL"] = "http://localhost:9000"
     app_config["S3_ACCESS_KEY_ID"] = "invenio"
@@ -321,8 +319,8 @@ def location(database):
 @pytest.fixture
 def user_with_public_key_in_profile(app, UserFixture, db):  # noqa: N803
     user1 = UserFixture(
-        email="user1@example.org",
-        password="user1password",  # noqa: S106
+        email="very_unique_not_causing_intergrity_sql_error_email@example.org",
+        password="superpassword",  # noqa: S106
         active=True,
         confirmed=True,
         user_profile={

@@ -9,12 +9,12 @@
 
 from __future__ import annotations
 
-from .permissions import PipelinePermissionPolicyPreset
+from .components import PipelineFileServiceConfigPreset
 from .pipeline_transfer import PipelineTransfer
 from .service import PipelineServicePreset
 
 __all__ = [
-    "PipelinePermissionPolicyPreset",
+    "PipelineFileServiceConfigPreset",
     "PipelineServicePreset",
     "PipelineTransfer",
 ]

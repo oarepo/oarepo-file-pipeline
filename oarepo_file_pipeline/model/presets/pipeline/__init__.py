@@ -18,8 +18,9 @@ from oarepo_file_pipeline.model.presets.pipeline.resources.config import (
 from oarepo_file_pipeline.model.presets.pipeline.resources.resource import (
     PipelineResourcePreset,
 )
-from oarepo_file_pipeline.model.presets.pipeline.services.permissions import (
-    PipelinePermissionPolicyPreset,
+from oarepo_file_pipeline.model.presets.pipeline.services.components import (
+    PipelineDraftFileServiceConfigPreset,
+    PipelineFileServiceConfigPreset,
 )
 from oarepo_file_pipeline.model.presets.pipeline.services.service import (
     PipelineServicePreset,
@@ -32,7 +33,8 @@ if TYPE_CHECKING:
 
 pipeline_preset: list[type[Preset | FunctionalPreset]] = [
     PipelineResourceConfigPreset,
-    PipelinePermissionPolicyPreset,
+    PipelineFileServiceConfigPreset,
+    PipelineDraftFileServiceConfigPreset,
     PipelineServicePreset,
     PipelineResourcePreset,
 ]
