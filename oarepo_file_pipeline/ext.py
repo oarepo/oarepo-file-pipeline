@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING
 from invenio_records_resources.config import RECORDS_RESOURCES_TRANSFERS
 
 from oarepo_file_pipeline.pipeline_registry import PipelineRegistry
+from oarepo_file_pipeline.schemas import CustomUserProfileSchema
 
 if TYPE_CHECKING:
     from flask import Flask
@@ -47,6 +48,8 @@ class OARepoFilePipeline:
             "RECORDS_RESOURCES_TRANSFERS",
             [*RECORDS_RESOURCES_TRANSFERS, *config.RECORDS_RESOURCES_TRANSFERS],
         )
+
+        app.config.setdefault("ACCOUNTS_USER_PROFILE_SCHEMA", CustomUserProfileSchema)
 
         app.config.setdefault("PIPELINE_REDIRECT_URL", config.PIPELINE_REDIRECT_URL)
         app.config.setdefault("PIPELINE_REPOSITORY_JWK", config.PIPELINE_REPOSITORY_JWK)

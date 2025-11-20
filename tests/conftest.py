@@ -12,10 +12,8 @@ import logging
 from pathlib import Path
 
 import pytest
-from invenio_accounts.profiles.schemas import UserProfileSchema
 from invenio_records_resources.config import RECORDS_RESOURCES_TRANSFERS
 from joserfc.jwk import RSAKey
-from marshmallow import fields
 
 from oarepo_file_pipeline import config
 
@@ -137,12 +135,6 @@ def model_a(model_types):
     return modela
 
 
-class CustomUserProfileSchema(UserProfileSchema):
-    """Custom user profile schema with additional fields."""
-
-    public_key = fields.String(required=False)
-
-
 @pytest.fixture(scope="module")
 def app_config(app_config):
     app_config["JSONSCHEMAS_HOST"] = "localhost"
@@ -181,8 +173,6 @@ def app_config(app_config):
     app_config["S3_ACCESS_KEY_ID"] = "invenio"
     app_config["S3_SECRET_ACCESS_KEY"] = "invenio8"  # noqa: S105
     app_config["S3_BUCKET"] = "default"
-
-    app_config["ACCOUNTS_USER_PROFILE_SCHEMA"] = CustomUserProfileSchema
 
     return app_config
 
