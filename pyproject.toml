@@ -20,7 +20,7 @@ tests = [
     "pytest-invenio",
     "pytest-oarepo"
 ]
-oarepo14=[
+oarepo14 = [
     "oarepo[rdm]>=14,<15",
 ]
 
