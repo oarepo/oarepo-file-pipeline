@@ -187,6 +187,10 @@ def extra_entry_points(model_a):
             "image_pipelines = oarepo_file_pipeline.pipeline_generators.image:ImageGenerator"
             "c4gh_pipeline = oarepo_file_pipeline.pipeline_generators.crypt4gh:Crypt4GHGenerator",
         ],
+        "invenio_base.blueprints": [
+            "invenio_app_rdm_records = tests.models:create_app_rdm_blueprint",
+            "modela_ui = tests.models:create_modela_ui_blueprint",
+        ],
     }
 
 

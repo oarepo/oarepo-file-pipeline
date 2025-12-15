@@ -8,7 +8,7 @@
 #
 from __future__ import annotations
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from flask import Blueprint
 from invenio_records_permissions.generators import AnyUser, Generator
@@ -93,7 +93,62 @@ def create_modela_ui_blueprint(app):
         return "search ok"
 
     @bp.route("/modela_ui/deposit_edit/<pid_value>", methods=["GET"])
-    def deposit_edit(pid_value: str) -> str:
+    def deposit_edit(pid_value: str, *args: Any, **kwargs: Any) -> str:
         return "deposit_edit ok"
 
     return bp
+
+
+def create_app_rdm_blueprint(app):
+    blueprint = Blueprint(
+        "invenio_app_rdm_records",
+        __name__,
+    )
+
+    def record_file_download(pid_value, file_item=None, is_preview=False, **kwargs):  # noqa: ANN003, ANN202
+        """Fake record_file_download view function."""
+        return "<file content>"
+
+    def record_detail(pid_value, file_item=None, is_preview=False, **kwargs):  # noqa: ANN003, ANN202
+        """Fake record_detail view function."""
+        return "<record detail>"
+
+    def deposit_edit(pid_value, file_item=None, is_preview=False, **kwargs):  # noqa: ANN003, ANN202
+        """Fake record_detail view function."""
+        return "<deposit edit>"
+
+    def record_latest(record=None, **kwargs):  # noqa: ANN003, ANN202
+        """Fake record_latest view function."""
+        return "<record latest>"
+
+    def record_from_pid(record=None, **kwargs):  # noqa: ANN003, ANN202
+        """Fake record_from_pid view function."""
+        return "<record from pid>"
+
+    # Records URL rules
+    blueprint.add_url_rule(
+        "/records/<pid_value>/files/<path:filename>",
+        view_func=record_file_download,
+    )
+
+    blueprint.add_url_rule(
+        "/records/<pid_value>",
+        view_func=record_detail,
+    )
+
+    blueprint.add_url_rule(
+        "/uploads/<pid_value>",
+        view_func=deposit_edit,
+    )
+
+    blueprint.add_url_rule(
+        "/records/<pid_value>/latest",
+        view_func=record_latest,
+    )
+
+    blueprint.add_url_rule(
+        "/<any(doi):pid_scheme>/<path:pid_value>",
+        view_func=record_from_pid,
+    )
+
+    return blueprint

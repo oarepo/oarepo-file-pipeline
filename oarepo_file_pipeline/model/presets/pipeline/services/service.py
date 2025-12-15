@@ -17,7 +17,7 @@ from flask import current_app
 from invenio_access.permissions import system_identity
 from invenio_cache import current_cache
 from joserfc import jwe, jwt
-from oarepo_model.customizations import AddMixins, Customization
+from oarepo_model.customizations import Customization, PrependMixin
 from oarepo_model.presets import Preset
 
 from oarepo_file_pipeline.proxies import current_pipeline, current_pipeline_registry
@@ -126,4 +126,4 @@ class PipelineServicePreset(Preset):
         model: InvenioModel,
         dependencies: dict[str, Any],
     ) -> Generator[Customization]:
-        yield AddMixins("FileService", PipelineFileService)
+        yield PrependMixin("FileService", PipelineFileService)

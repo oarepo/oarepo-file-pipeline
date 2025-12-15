@@ -15,7 +15,7 @@ from flask import g, redirect, request
 from flask_resources import resource_requestctx, route
 from invenio_records_resources.resources import FileResource
 from invenio_records_resources.resources.files.resource import request_view_args
-from oarepo_model.customizations import AddMixins, Customization
+from oarepo_model.customizations import Customization, PrependMixin
 from oarepo_model.presets import Preset
 
 if TYPE_CHECKING:
@@ -69,4 +69,4 @@ class PipelineResourcePreset(Preset):
         model: InvenioModel,
         dependencies: dict[str, Any],
     ) -> Generator[Customization]:
-        yield AddMixins("FileResource", PipelineFileResource)
+        yield PrependMixin("FileResource", PipelineFileResource)

@@ -16,7 +16,7 @@ from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, override
 
 # TODO: from oarepo_runtime.resources.config import BaseRecordResourceConfig as RDMBaseRecordResourceConfig
-from oarepo_model.customizations import AddMixins, Customization
+from oarepo_model.customizations import Customization, PrependMixin
 from oarepo_model.presets import Preset
 
 if TYPE_CHECKING:
@@ -50,7 +50,7 @@ class PipelineResourceConfigPreset(Preset):
         model: InvenioModel,
         dependencies: dict[str, Any],
     ) -> Generator[Customization]:
-        yield AddMixins(
+        yield PrependMixin(
             "FileResourceConfig",
             PipelineFileResourceConfig,
         )

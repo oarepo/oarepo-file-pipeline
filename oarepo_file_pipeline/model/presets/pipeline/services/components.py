@@ -16,7 +16,7 @@ from flask import current_app
 from invenio_records_resources.services.files.components.base import FileServiceComponent
 from invenio_records_resources.services.files.config import FileServiceConfig
 from invenio_records_resources.services.uow import RecordCommitOp
-from oarepo_model.customizations import AddMixins, Customization
+from oarepo_model.customizations import Customization, PrependMixin
 from oarepo_model.presets import Preset
 
 from oarepo_file_pipeline.proxies import current_pipeline_registry
@@ -72,7 +72,7 @@ class PipelineFileServiceConfigPreset(Preset):
         model: InvenioModel,
         dependencies: dict[str, Any],
     ) -> Generator[Customization]:
-        yield AddMixins("FileServiceConfig", PipelineFileServiceConfigMixin)
+        yield PrependMixin("FileServiceConfig", PipelineFileServiceConfigMixin)
 
 
 class PipelineDraftFileServiceConfigPreset(Preset):
@@ -87,4 +87,4 @@ class PipelineDraftFileServiceConfigPreset(Preset):
         model: InvenioModel,
         dependencies: dict[str, Any],
     ) -> Generator[Customization]:
-        yield AddMixins("DraftFileServiceConfig", PipelineFileServiceConfigMixin)
+        yield PrependMixin("DraftFileServiceConfig", PipelineFileServiceConfigMixin)
