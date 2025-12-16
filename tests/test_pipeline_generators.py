@@ -183,13 +183,13 @@ def test_crypt4gh_generator_get_pipeline_success(app, client, users, draft_recor
         user.identity,
         draft_record_with_files.files["blah.c4gh"],
         "some_url",
-        "crypt4gh",
+        "add_recipient_crypt4gh",
         {"recipient_pub": "secret_public_key"},
     )
 
     assert pipeline == [
         {
-            "type": "crypt4gh",
+            "type": "add_recipient_crypt4gh",
             "arguments": {
                 "source_url": "some_url",
                 "recipient_pub": "secret_public_key",
@@ -208,7 +208,7 @@ def test_crypt4gh_generator_get_pipeline_no_file_url(
             user.identity,
             draft_record_with_files.files["blah.c4gh"],
             "",
-            "crypt4gh",
+            "add_recipient_crypt4gh",
             {},
         )
 
@@ -223,6 +223,50 @@ def test_crypt4gh_generator_get_pipeline_can_not_handle(
             user.identity,
             draft_record_with_files.files["blah.txt"],
             "123.com",
-            "crypt4gh",
+            "add_recipient_crypt4gh",
             {},
         )
+
+
+def test_crypt4gh_generator_get_pipeline_decrypt(app, client, users, draft_record_with_files, location, search_clear):
+    user = users[0]
+    crypt4gh_generator = Crypt4GHGenerator()
+
+    pipeline = crypt4gh_generator.get_pipeline(
+        user.identity,
+        draft_record_with_files.files["blah.c4gh"],
+        "some_url",
+        "decrypt_crypt4gh",
+        {},
+    )
+
+    assert pipeline == [
+        {
+            "type": "decrypt_crypt4gh",
+            "arguments": {
+                "source_url": "some_url",
+            },
+        },
+    ]
+
+
+def test_crypt4gh_generator_get_pipeline_validate(app, client, users, draft_record_with_files, location, search_clear):
+    user = users[0]
+    crypt4gh_generator = Crypt4GHGenerator()
+
+    pipeline = crypt4gh_generator.get_pipeline(
+        user.identity,
+        draft_record_with_files.files["blah.c4gh"],
+        "some_url",
+        "validate_crypt4gh",
+        {},
+    )
+
+    assert pipeline == [
+        {
+            "type": "validate_crypt4gh",
+            "arguments": {
+                "source_url": "some_url",
+            },
+        },
+    ]

@@ -45,6 +45,9 @@ class PermissionPolicyWithModelAPermission(EveryonePermissionPolicy):
     get_content_files: ClassVar[list[Generator]] = [
         AnyUser(),
     ]
+    can_create_files: ClassVar[list[Generator]] = [
+        AnyUser(),
+    ]
 
 
 modela = model(

@@ -150,7 +150,9 @@ def test_pipeline_crypt4gh_key_taken_from_user_profile(
     # since in tests permissions are not enforced we can use any user
     client = logged_client(user_with_public_key_in_profile)
 
-    response = client.get(f"/modela/{published_record_with_files['id']}/files/blah.c4gh/pipeline?pipeline=crypt4gh")
+    response = client.get(
+        f"/modela/{published_record_with_files['id']}/files/blah.c4gh/pipeline?pipeline=add_recipient_crypt4gh"
+    )
 
     assert response.status_code == 302
 
@@ -168,9 +170,71 @@ def test_pipeline_crypt4gh_key_taken_from_user_profile(
 
     claims = decrypted_jwt.claims
 
-    assert claims["pipeline_steps"][0]["type"] == "crypt4gh"
+    assert claims["pipeline_steps"][0]["type"] == "add_recipient_crypt4gh"
     assert claims["pipeline_steps"][0]["arguments"]["source_url"]
     assert (
         claims["pipeline_steps"][0]["arguments"]["recipient_pub"] == "super_duper_non_secret_public_key_value"
     )  # defined in fixture
+    assert claims["source_url"]
+
+
+def test_pipeline_validate_crypt4gh_step(
+    app, logged_client, user_with_public_key_in_profile, published_record_with_files, location, search_clear
+):
+    # since in tests permissions are not enforced we can use any user
+    client = logged_client(user_with_public_key_in_profile)
+
+    response = client.get(
+        f"/modela/{published_record_with_files['id']}/files/blah.c4gh/pipeline?pipeline=validate_crypt4gh"
+    )
+
+    assert response.status_code == 302
+
+    jwe_token = current_cache.cache._read_client.get(response.location.rsplit("/", 1)[-1]).decode("utf-8")  # noqa: SLF001
+    assert jwe_token is not None
+
+    claims_requests = jwt.JWTClaimsRegistry(
+        now=int(datetime.datetime.now(tz=datetime.UTC).timestamp()),
+        leeway=5,
+    )
+    encrypted_jwt = jwe.decrypt_compact(jwe_token, app.config["PIPELINE_SERVER_PRIVATE"]).plaintext
+    decrypted_jwt = jwt.decode(encrypted_jwt, app.config["PIPELINE_REPOSITORY_JWK"]["public_key"])
+    claims_requests.validate_exp(value=decrypted_jwt.claims.pop("exp"))
+    claims_requests.validate_iat(value=decrypted_jwt.claims.pop("iat"))
+
+    claims = decrypted_jwt.claims
+
+    assert claims["pipeline_steps"][0]["type"] == "validate_crypt4gh"
+    assert claims["pipeline_steps"][0]["arguments"]["source_url"]
+    assert claims["source_url"]
+
+
+def test_pipeline_decrypt_crypt4gh_step(
+    app, logged_client, user_with_public_key_in_profile, published_record_with_files, location, search_clear
+):
+    # since in tests permissions are not enforced we can use any user
+    client = logged_client(user_with_public_key_in_profile)
+
+    response = client.get(
+        f"/modela/{published_record_with_files['id']}/files/blah.c4gh/pipeline?pipeline=decrypt_crypt4gh"
+    )
+
+    assert response.status_code == 302
+
+    jwe_token = current_cache.cache._read_client.get(response.location.rsplit("/", 1)[-1]).decode("utf-8")  # noqa: SLF001
+    assert jwe_token is not None
+
+    claims_requests = jwt.JWTClaimsRegistry(
+        now=int(datetime.datetime.now(tz=datetime.UTC).timestamp()),
+        leeway=5,
+    )
+    encrypted_jwt = jwe.decrypt_compact(jwe_token, app.config["PIPELINE_SERVER_PRIVATE"]).plaintext
+    decrypted_jwt = jwt.decode(encrypted_jwt, app.config["PIPELINE_REPOSITORY_JWK"]["public_key"])
+    claims_requests.validate_exp(value=decrypted_jwt.claims.pop("exp"))
+    claims_requests.validate_iat(value=decrypted_jwt.claims.pop("iat"))
+
+    claims = decrypted_jwt.claims
+
+    assert claims["pipeline_steps"][0]["type"] == "decrypt_crypt4gh"
+    assert claims["pipeline_steps"][0]["arguments"]["source_url"]
     assert claims["source_url"]

@@ -34,7 +34,9 @@ class Crypt4GHGenerator(PipelineGenerator):
         """List all available pipelines."""
         return iter(
             [
-                "crypt4gh",
+                "add_recipient_crypt4gh",
+                "decrypt_crypt4gh",
+                "validate_crypt4gh",
             ]
         )
 
@@ -52,15 +54,33 @@ class Crypt4GHGenerator(PipelineGenerator):
         if not file_url:
             raise ValueError("File URL cannot be None")
 
-        if pipeline_name == "crypt4gh":
+        if pipeline_name == "add_recipient_crypt4gh":
             user_pub_key = identity.user.user_profile.get("public_key") or extra_arguments.get("recipient_pub")  # type: ignore[attr-defined]
 
             return [
                 {
-                    "type": "crypt4gh",
+                    "type": "add_recipient_crypt4gh",
                     "arguments": {
                         "source_url": file_url,
                         "recipient_pub": user_pub_key,
+                    },
+                },
+            ]
+        if pipeline_name == "decrypt_crypt4gh":
+            return [
+                {
+                    "type": "decrypt_crypt4gh",
+                    "arguments": {
+                        "source_url": file_url,
+                    },
+                },
+            ]
+        if pipeline_name == "validate_crypt4gh":
+            return [
+                {
+                    "type": "validate_crypt4gh",
+                    "arguments": {
+                        "source_url": file_url,
                     },
                 },
             ]
