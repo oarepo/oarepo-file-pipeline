@@ -37,6 +37,7 @@ class PipelineFileResource(FileResource):
         routes = self.config.routes
 
         return [
+            *super().create_url_rules(),
             route("GET", routes["read_with_pipeline"], self.read_with_pipeline),
         ]
 
