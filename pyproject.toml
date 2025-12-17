@@ -6,7 +6,7 @@ readme = "README.md"
 authors = [
     { name = "Arsenii Pogodin", email = "xsenyaaax@gmail.com" },
 ]
-requires-python = ">=3.13,<3.14"
+requires-python = ">=3.14,<3.15"
 dependencies = [
     "oarepo[rdm,tests]>=14.0.0,<15.0.0",
     "oarepo-runtime>=2.0.0dev5,<3.0.0",
