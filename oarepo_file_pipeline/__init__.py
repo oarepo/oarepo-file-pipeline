@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from flask_principal import Identity
     from invenio_records_resources.records.api import FileRecord
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 class PipelineGetterFunction(Protocol):
